@@ -27,7 +27,7 @@ def select_visuals(visuals, direction):
     del visuals[visual]
   return visuals
 
-def save_images(image_dir, visuals, image_path, aspect_ratio=1.0):
+def save_images(image_dir, visuals, image_path):
     short_path = ntpath.basename(image_path[0])
     name = os.path.splitext(short_path)[0]
 
@@ -35,7 +35,7 @@ def save_images(image_dir, visuals, image_path, aspect_ratio=1.0):
       im = util.tensor2im(im_data)
       image_name = '%s_%s.png' % (name, label)
       save_path = os.path.join(image_dir, image_name)
-      util.save_image(im, save_path, aspect_ratio=aspect_ratio)
+      util.save_image(im, save_path)
 
 
 if __name__ == '__main__':
@@ -98,14 +98,12 @@ if __name__ == '__main__':
       save_images(
         image_dir=train_img_dir,
         visuals=visuals,
-        image_path=img_path,
-        aspect_ratio=opt.aspect_ratio,
+        image_path=img_path
       )
       save_images(
         image_dir=full_img_dir,
         visuals=visuals,
-        image_path=img_path,
-        aspect_ratio=opt.aspect_ratio,
+        image_path=img_path
       )
 
     print('processing test...')
@@ -126,12 +124,10 @@ if __name__ == '__main__':
       save_images(
         image_dir=test_img_dir,
         visuals=visuals,
-        image_path=img_path,
-        aspect_ratio=opt.aspect_ratio,
+        image_path=img_path
       )
       save_images(
         image_dir=full_img_dir,
         visuals=visuals,
-        image_path=img_path,
-        aspect_ratio=opt.aspect_ratio,
+        image_path=img_path
       )
