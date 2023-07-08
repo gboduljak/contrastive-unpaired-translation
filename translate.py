@@ -64,13 +64,15 @@ if __name__ == '__main__':
       os.mkdir('translations')
 
     model_translations_dir = Path('translations', opt.name)
-
     if not os.path.exists(model_translations_dir):
       os.mkdir(model_translations_dir)
-
-    train_translated_imgs_dir = Path(model_translations_dir, 'train')
-    test_translated_imgs_dir = Path(model_translations_dir, 'test')
-    full_translated_imgs_dir = Path(model_translations_dir, 'full')
+    model_with_epochs_translations_dir = Path(model_translations_dir, f'epoch-{opt.epoch}')
+    if not os.path.exists(model_with_epochs_translations_dir):
+      os.mkdir(model_with_epochs_translations_dir)
+        
+    train_translated_imgs_dir = Path(model_with_epochs_translations_dir, 'train')
+    test_translated_imgs_dir = Path(model_with_epochs_translations_dir, 'test')
+    full_translated_imgs_dir = Path(model_with_epochs_translations_dir, 'full')
 
     if not os.path.exists(train_translated_imgs_dir):
       os.mkdir(train_translated_imgs_dir)
