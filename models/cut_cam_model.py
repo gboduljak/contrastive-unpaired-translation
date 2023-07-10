@@ -36,7 +36,7 @@ class CUTCAMModel(BaseModel):
     parser.add_argument('--flip_equivariance',
                         type=util.str2bool, nargs='?', const=True, default=False,
                         help="Enforce flip-equivariance as additional regularization. It's used by FastCUT, but not CUT")
-    parser.add_argument('--cam_weight', type=float, default=1000, help='CAM weight')
+    parser.add_argument('--cam_weight', type=float, default=1, help='CAM weight')
 
     parser.set_defaults(pool_size=0)  # no image pooling
 

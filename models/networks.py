@@ -1125,26 +1125,27 @@ class ResnetCAMGenerator(nn.Module):
       return feat, feats  # return both output and intermediate features
     else:
       down = self.down(input)
+      gap = F.adaptive_avg_pool2d(down, 1)
+      gap_logit = self.gap_fc(gap.view(down.shape[0], -1))
+      gap_weight = list(self.gap_fc.parameters())[0]
+      gap = down * gap_weight.unsqueeze(2).unsqueeze(3)
+
+      gmp = F.adaptive_max_pool2d(down, 1)
+      gmp_logit = self.gmp_fc(gmp.view(down.shape[0], -1))
+      gmp_weight = list(self.gmp_fc.parameters())[0]
+      gmp = down * gmp_weight.unsqueeze(2).unsqueeze(3)
+
+      cam_logit = torch.cat([gap_logit, gmp_logit], 1)
+      weighted_down = torch.cat([gap, gmp], 1)
+      weighted_down = self.relu(self.conv1x1(weighted_down))
+      heatmap = torch.sum(weighted_down, dim=1, keepdim=True)
+
+      up = self.up(weighted_down)
+
       if cam:
-        gap = F.adaptive_avg_pool2d(down, 1)
-        gap_logit = self.gap_fc(gap.view(down.shape[0], -1))
-        gap_weight = list(self.gap_fc.parameters())[0]
-        gap = down * gap_weight.unsqueeze(2).unsqueeze(3)
-
-        gmp = F.adaptive_max_pool2d(down, 1)
-        gmp_logit = self.gmp_fc(gmp.view(down.shape[0], -1))
-        gmp_weight = list(self.gmp_fc.parameters())[0]
-        gmp = down * gmp_weight.unsqueeze(2).unsqueeze(3)
-
-        cam_logit = torch.cat([gap_logit, gmp_logit], 1)
-        weighted_down = torch.cat([gap, gmp], 1)
-        weighted_down = self.relu(self.conv1x1(weighted_down))
-        heatmap = torch.sum(weighted_down, dim=1, keepdim=True)
-
-        up = self.up(weighted_down)
         return up, cam_logit, heatmap
       else:
-        return self.up(down)
+        return up
 
 
 class ResnetDecoder(nn.Module):
