@@ -311,5 +311,7 @@ class CUTCAMModel(BaseModel):
                           cam(tensor2numpy(fake_B2B_heatmap[0])),
                           RGB2BGR(tensor2numpy(denorm(fake_B2B[0])))), 0)
 
-    cv2.imwrite(os.path.join(self.result_dir, self.dataset, 'test', 'A2B_%d.png' % (n + 1)), A2B * 255.0)
-    cv2.imwrite(os.path.join(self.result_dir, self.dataset, 'test', 'B2B_%d.png' % (n + 1)), B2B * 255.0)
+    if not os.path.exists('results'):
+      os.mkdir('results')
+    cv2.imwrite(os.path.join('results' 'A2B_%d.png' % (n + 1)), A2B * 255.0)
+    cv2.imwrite(os.path.join('results', 'B2B_%d.png' % (n + 1)), B2B * 255.0)
