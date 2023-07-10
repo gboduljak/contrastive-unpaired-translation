@@ -1540,24 +1540,23 @@ class NLayerCAMDiscriminator(nn.Module):
   def forward(self, input, cam=False):
     """Standard forward."""
     x = self.model(input)
+    gap = torch.nn.functional.adaptive_avg_pool2d(x, 1)
+    gap_logit = self.gap_fc(gap.view(x.shape[0], -1))
+    gap_weight = list(self.gap_fc.parameters())[0]
+    gap = x * gap_weight.unsqueeze(2).unsqueeze(3)
+
+    gmp = torch.nn.functional.adaptive_max_pool2d(x, 1)
+    gmp_logit = self.gmp_fc(gmp.view(x.shape[0], -1))
+    gmp_weight = list(self.gmp_fc.parameters())[0]
+    gmp = x * gmp_weight.unsqueeze(2).unsqueeze(3)
+
+    cam_logit = torch.cat([gap_logit, gmp_logit], 1)
+    x = torch.cat([gap, gmp], 1)
+    x = self.leaky_relu(self.heatmap_conv(x))
+
+    heatmap = torch.sum(x, dim=1, keepdim=True)
 
     if cam:
-      gap = torch.nn.functional.adaptive_avg_pool2d(x, 1)
-      gap_logit = self.gap_fc(gap.view(x.shape[0], -1))
-      gap_weight = list(self.gap_fc.parameters())[0]
-      gap = x * gap_weight.unsqueeze(2).unsqueeze(3)
-
-      gmp = torch.nn.functional.adaptive_max_pool2d(x, 1)
-      gmp_logit = self.gmp_fc(gmp.view(x.shape[0], -1))
-      gmp_weight = list(self.gmp_fc.parameters())[0]
-      gmp = x * gmp_weight.unsqueeze(2).unsqueeze(3)
-
-      cam_logit = torch.cat([gap_logit, gmp_logit], 1)
-      x = torch.cat([gap, gmp], 1)
-      x = self.leaky_relu(self.heatmap_conv(x))
-
-      heatmap = torch.sum(x, dim=1, keepdim=True)
-
       return self.out(x), cam_logit, heatmap
     else:
       return self.out(x)
