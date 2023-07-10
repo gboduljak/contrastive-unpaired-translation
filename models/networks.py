@@ -1065,7 +1065,7 @@ class ResnetCAMGenerator(nn.Module):
         padding_type (str)  -- the name of padding layer in conv layers: reflect | replicate | zero
     """
     assert (n_blocks >= 0)
-    super(ResnetGenerator, self).__init__()
+    super(ResnetCAMGenerator, self).__init__()
     self.opt = opt
     if type(norm_layer) == functools.partial:
       use_bias = norm_layer.func == nn.InstanceNorm2d
@@ -1492,7 +1492,7 @@ class NLayerCAMDiscriminator(nn.Module):
         n_layers (int)  -- the number of conv layers in the discriminator
         norm_layer      -- normalization layer
     """
-    super(NLayerDiscriminator, self).__init__()
+    super(NLayerCAMDiscriminator, self).__init__()
     if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters
       use_bias = norm_layer.func == nn.InstanceNorm2d
     else:
