@@ -300,8 +300,8 @@ class CUTCAMModel(BaseModel):
     def RGB2BGR(x):
       return cv2.cvtColor(x, cv2.COLOR_RGB2BGR)
 
-    fake_A2B, _, fake_A2B_heatmap = self.netG(self.real_A)
-    fake_B2B, _, fake_B2B_heatmap = self.netG(self.real_B)
+    fake_A2B, _, fake_A2B_heatmap = self.netG(self.real_A, cam=True)
+    fake_B2B, _, fake_B2B_heatmap = self.netG(self.real_B, cam=True)
 
     A2B = np.concatenate((RGB2BGR(tensor2numpy(denorm(self.real_A[0]))),
                           cam(tensor2numpy(fake_A2B_heatmap[0]), self.img_size),
