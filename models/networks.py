@@ -1019,6 +1019,33 @@ class ResnetGenerator(nn.Module):
       return fake
 
 
+class CAMLayer(nn.Module):
+  def __init__(self, ngf: int, mult: int):
+    super(CAMLayer, self).__init__()
+    self.gap_fc = nn.Linear(ngf * mult, 1, bias=False)
+    self.gmp_fc = nn.Linear(ngf * mult, 1, bias=False)
+    self.conv1x1 = nn.Conv2d(ngf * mult * 2, ngf * mult, kernel_size=1, stride=1, bias=True)
+    self.relu = nn.ReLU(True)
+
+  def forward(self, x):
+    gap = F.adaptive_avg_pool2d(x, 1)
+    gap_logit = self.gap_fc(gap.view(x.shape[0], -1))
+    gap_weight = list(self.gap_fc.parameters())[0]
+    gap = x * gap_weight.unsqueeze(2).unsqueeze(3)
+
+    gmp = F.adaptive_max_pool2d(x, 1)
+    gmp_logit = self.gmp_fc(gmp.view(x.shape[0], -1))
+    gmp_weight = list(self.gmp_fc.parameters())[0]
+    gmp = x * gmp_weight.unsqueeze(2).unsqueeze(3)
+
+    self.cam_logit = torch.cat([gap_logit, gmp_logit], 1)
+    weighted_down = torch.cat([gap, gmp], 1)
+    weighted_down = self.relu(self.conv1x1(weighted_down))
+    self.heatmap = torch.sum(weighted_down, dim=1, keepdim=True)
+
+    return weighted_down
+
+
 class ResnetCAMGenerator(nn.Module):
   """Resnet-based generator that consists of Resnet blocks between a few downsampling/upsampling operations.
 
@@ -1038,78 +1065,67 @@ class ResnetCAMGenerator(nn.Module):
         padding_type (str)  -- the name of padding layer in conv layers: reflect | replicate | zero
     """
     assert (n_blocks >= 0)
-    super(ResnetCAMGenerator, self).__init__()
+    super(ResnetGenerator, self).__init__()
     self.opt = opt
     if type(norm_layer) == functools.partial:
       use_bias = norm_layer.func == nn.InstanceNorm2d
     else:
       use_bias = norm_layer == nn.InstanceNorm2d
 
-
-    down = [nn.ReflectionPad2d(3),
-            nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0, bias=use_bias),
-            norm_layer(ngf),
-            nn.ReLU(True)]
+    model = [nn.ReflectionPad2d(3),
+             nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0, bias=use_bias),
+             norm_layer(ngf),
+             nn.ReLU(True)]
 
     n_downsampling = 2
     for i in range(n_downsampling):  # add downsampling layers
       mult = 2 ** i
       if (no_antialias):
-        down += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1, bias=use_bias),
-                 norm_layer(ngf * mult * 2),
-                 nn.ReLU(True)]
+        model += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1, bias=use_bias),
+                  norm_layer(ngf * mult * 2),
+                  nn.ReLU(True)]
       else:
-        down += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=1, padding=1, bias=use_bias),
-                 norm_layer(ngf * mult * 2),
-                 nn.ReLU(True),
-                 Downsample(ngf * mult * 2)]
+        model += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=1, padding=1, bias=use_bias),
+                  norm_layer(ngf * mult * 2),
+                  nn.ReLU(True),
+                  Downsample(ngf * mult * 2)]
 
     mult = 2 ** n_downsampling
     for i in range(n_blocks):       # add ResNet blocks
-      down += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
+      model += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
 
-    self.down = nn.Sequential(*down)
-
-    self.gap_fc = nn.Linear(ngf * mult, 1, bias=False)
-    self.gmp_fc = nn.Linear(ngf * mult, 1, bias=False)
-    self.conv1x1 = nn.Conv2d(ngf * mult * 2, ngf * mult, kernel_size=1, stride=1, bias=True)
-    self.relu = nn.ReLU(True)
-
-    up = []
+    model += [CAMLayer(ngf, mult)]
 
     for i in range(n_downsampling):  # add upsampling layers
       mult = 2 ** (n_downsampling - i)
       if no_antialias_up:
-        up += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
-                                  kernel_size=3, stride=2,
-                                  padding=1, output_padding=1,
-                                  bias=use_bias),
-               norm_layer(int(ngf * mult / 2)),
-               nn.ReLU(True)]
+        model += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
+                                     kernel_size=3, stride=2,
+                                     padding=1, output_padding=1,
+                                     bias=use_bias),
+                  norm_layer(int(ngf * mult / 2)),
+                  nn.ReLU(True)]
       else:
-        up += [Upsample(ngf * mult),
-               nn.Conv2d(ngf * mult, int(ngf * mult / 2),
-                         kernel_size=3, stride=1,
-                         padding=1,  # output_padding=1,
-                         bias=use_bias),
-               norm_layer(int(ngf * mult / 2)),
-               nn.ReLU(True)]
-    up += [nn.ReflectionPad2d(3)]
-    up += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
-    up += [nn.Tanh()]
+        model += [Upsample(ngf * mult),
+                  nn.Conv2d(ngf * mult, int(ngf * mult / 2),
+                            kernel_size=3, stride=1,
+                            padding=1,  # output_padding=1,
+                            bias=use_bias),
+                  norm_layer(int(ngf * mult / 2)),
+                  nn.ReLU(True)]
+    model += [nn.ReflectionPad2d(3)]
+    model += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
+    model += [nn.Tanh()]
 
-    self.up = nn.Sequential(*up)
+    self.model = nn.Sequential(*model)
 
   def forward(self, input, layers=[], encode_only=False, cam=False):
-
-    model = list(self.down) + list(self.up)
     if -1 in layers:
-      layers.append(len(model))
-
+      layers.append(len(self.model))
     if len(layers) > 0:
       feat = input
       feats = []
-      for layer_id, layer in enumerate(model):
+      for layer_id, layer in enumerate(self.model):
         # print(layer_id, layer)
         feat = layer(feat)
         if layer_id in layers:
@@ -1124,28 +1140,14 @@ class ResnetCAMGenerator(nn.Module):
 
       return feat, feats  # return both output and intermediate features
     else:
-      down = self.down(input)
-      gap = F.adaptive_avg_pool2d(down, 1)
-      gap_logit = self.gap_fc(gap.view(down.shape[0], -1))
-      gap_weight = list(self.gap_fc.parameters())[0]
-      gap = down * gap_weight.unsqueeze(2).unsqueeze(3)
-
-      gmp = F.adaptive_max_pool2d(down, 1)
-      gmp_logit = self.gmp_fc(gmp.view(down.shape[0], -1))
-      gmp_weight = list(self.gmp_fc.parameters())[0]
-      gmp = down * gmp_weight.unsqueeze(2).unsqueeze(3)
-
-      cam_logit = torch.cat([gap_logit, gmp_logit], 1)
-      weighted_down = torch.cat([gap, gmp], 1)
-      weighted_down = self.relu(self.conv1x1(weighted_down))
-      heatmap = torch.sum(weighted_down, dim=1, keepdim=True)
-
-      up = self.up(weighted_down)
-
+      """Standard forward"""
+      fake = self.model(input)
       if cam:
-        return up, cam_logit, heatmap
-      else:
-        return up
+        for layer in self.model:
+          if hasattr(layer, 'cam_logit'):
+            return fake, layer.cam_logit, layer.heatmap
+        raise IndexError('could not find cam logit')
+      return fake
 
 
 class ResnetDecoder(nn.Module):
@@ -1490,7 +1492,7 @@ class NLayerCAMDiscriminator(nn.Module):
         n_layers (int)  -- the number of conv layers in the discriminator
         norm_layer      -- normalization layer
     """
-    super(NLayerCAMDiscriminator, self).__init__()
+    super(NLayerDiscriminator, self).__init__()
     if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters
       use_bias = norm_layer.func == nn.InstanceNorm2d
     else:
@@ -1527,40 +1529,19 @@ class NLayerCAMDiscriminator(nn.Module):
         norm_layer(ndf * nf_mult),
         nn.LeakyReLU(0.2, True)
     ]
-
-    # Class Activation Map
-    mult = 2 ** n_layers
-    self.gap_fc = nn.Linear(ndf * mult, 1, bias=False)
-    self.gmp_fc = nn.Linear(ndf * mult, 1, bias=False)
-    self.heatmap_conv = nn.Conv2d(ndf * mult * 2, ndf * mult, kernel_size=1, stride=1, bias=True)
-    self.leaky_relu = nn.LeakyReLU(0.2, True)
-
-    self.out = nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)  # output 1 channel prediction map
+    sequence += [CAMLayer(ndf, 2 ** n_layers)]
+    sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
     self.model = nn.Sequential(*sequence)
 
   def forward(self, input, cam=False):
     """Standard forward."""
-    x = self.model(input)
-    gap = torch.nn.functional.adaptive_avg_pool2d(x, 1)
-    gap_logit = self.gap_fc(gap.view(x.shape[0], -1))
-    gap_weight = list(self.gap_fc.parameters())[0]
-    gap = x * gap_weight.unsqueeze(2).unsqueeze(3)
-
-    gmp = torch.nn.functional.adaptive_max_pool2d(x, 1)
-    gmp_logit = self.gmp_fc(gmp.view(x.shape[0], -1))
-    gmp_weight = list(self.gmp_fc.parameters())[0]
-    gmp = x * gmp_weight.unsqueeze(2).unsqueeze(3)
-
-    cam_logit = torch.cat([gap_logit, gmp_logit], 1)
-    x = torch.cat([gap, gmp], 1)
-    x = self.leaky_relu(self.heatmap_conv(x))
-
-    heatmap = torch.sum(x, dim=1, keepdim=True)
-
+    out = self.model(input)
     if cam:
-      return self.out(x), cam_logit, heatmap
-    else:
-      return self.out(x)
+      for layer in self.model:
+        if hasattr(layer, 'cam_logit'):
+          return out, layer.cam_logit, layer.heatmap
+      raise IndexError('could not find cam logit')
+    return out
 
 
 class PixelDiscriminator(nn.Module):
