@@ -304,11 +304,11 @@ class CUTCAMModel(BaseModel):
     fake_B2B, _, fake_B2B_heatmap = self.netG(self.real_B, cam=True)
 
     A2B = np.concatenate((RGB2BGR(tensor2numpy(denorm(self.real_A[0]))),
-                          cam(tensor2numpy(fake_A2B_heatmap[0]), self.img_size),
+                          cam(tensor2numpy(fake_A2B_heatmap[0])),
                           RGB2BGR(tensor2numpy(denorm(fake_A2B[0])))), 0)
 
     B2B = np.concatenate((RGB2BGR(tensor2numpy(denorm(self.real_B[0]))),
-                          cam(tensor2numpy(fake_B2B_heatmap[0]), self.img_size),
+                          cam(tensor2numpy(fake_B2B_heatmap[0])),
                           RGB2BGR(tensor2numpy(denorm(fake_B2B[0])))), 0)
 
     cv2.imwrite(os.path.join(self.result_dir, self.dataset, 'test', 'A2B_%d.png' % (n + 1)), A2B * 255.0)
