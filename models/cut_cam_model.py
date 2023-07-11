@@ -36,7 +36,7 @@ class CUTCAMModel(BaseModel):
     parser.add_argument('--flip_equivariance',
                         type=util.str2bool, nargs='?', const=True, default=False,
                         help="Enforce flip-equivariance as additional regularization. It's used by FastCUT, but not CUT")
-    parser.add_argument('--cam_weight', type=float, default=10, help='CAM weight')
+    parser.add_argument('--cam_weight', type=float, default=1.0, help='CAM weight')
 
     parser.set_defaults(pool_size=0)  # no image pooling
 
@@ -168,8 +168,6 @@ class CUTCAMModel(BaseModel):
     self.fake_A2B_cam_logit = cam_logits[:self.real_A.size(0)]
     self.fake_B2B_cam_logit = cam_logits[self.real_A.size(0):]
 
-    self.fake = self.netG(self.real, cam=False)
-
     self.fake_B = self.fake[:self.real_A.size(0)]
     if self.opt.nce_idt:
       self.idt_B = self.fake[self.real_A.size(0):]
@@ -177,9 +175,9 @@ class CUTCAMModel(BaseModel):
   def compute_D_loss(self):
     """Calculate GAN loss for the discriminator"""
 
-    fake = self.fake_B.detach()
-
     real_LB_logit, real_LB_cam_logit, _ = self.netDLB(self.real_B, cam=True)
+
+    fake = self.fake_B.detach()
     fake_LB_logit, fake_LB_cam_logit, _ = self.netDLB(fake, cam=True)
 
     # Fake; stop backprop to the generator by detaching fake_B
@@ -313,5 +311,5 @@ class CUTCAMModel(BaseModel):
 
     if not os.path.exists('results'):
       os.mkdir('results')
-    cv2.imwrite(os.path.join('results' 'A2B_%d.png' % (n + 1)), A2B * 255.0)
+    cv2.imwrite(os.path.join('results', 'A2B_%d.png' % (n + 1)), A2B * 255.0)
     cv2.imwrite(os.path.join('results', 'B2B_%d.png' % (n + 1)), B2B * 255.0)
