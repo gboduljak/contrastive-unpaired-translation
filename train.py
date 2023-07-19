@@ -54,6 +54,8 @@ if __name__ == '__main__':
         save_result = total_iters % opt.update_html_freq == 0
         model.compute_visuals()
         visualizer.display_current_results(model.get_current_visuals(), epoch, save_result)
+        if hasattr(model, 'display_cam') and callable(getattr(model, 'display_cam')):
+          model.display_cam(total_iters)
 
       if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
         losses = model.get_current_losses()

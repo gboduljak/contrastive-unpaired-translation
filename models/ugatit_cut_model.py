@@ -1,5 +1,7 @@
 import itertools
+import os
 
+import cv2
 import numpy as np
 import torch
 import torch.nn as nn
@@ -122,6 +124,7 @@ class UGATITCUTModel(BaseModel):
       self.criterionNCE = []
       self.criterionMSE = nn.MSELoss().to(self.device)
       self.criterionBCE = nn.BCELoss().to(self.device)
+      self.criterionBCELogits = nn.BCEWithLogitsLoss().to(self.device)
 
       for _ in self.nce_layers:
         self.criterionNCE.append(PatchNCELoss(opt).to(self.device))
@@ -304,14 +307,13 @@ class UGATITCUTModel(BaseModel):
       self.loss_G_GAN = 0.0
 
     # Second, G(A) should update CAM
-    self.loss_G_CAM = self.criterionBCE(
+    self.loss_G_CAM = self.criterionBCELogits(
         self.g_fake_B_cam_logit,
         torch.ones_like(self.g_fake_B_cam_logit).to(self.device)
-    ) + self.criterionBCE(
+    ) + self.criterionBCELogits(
         self.g_fake_idt_B_cam_logit,
         torch.zeros_like(self.g_fake_idt_B_cam_logit).to(self.device)
     )
-
 
     if self.opt.lambda_NCE > 0.0:
       self.loss_NCE = self.calculate_NCE_loss(self.real_A, self.fake_B)
@@ -344,3 +346,37 @@ class UGATITCUTModel(BaseModel):
       total_nce_loss += loss.mean()
 
     return total_nce_loss / n_layers
+
+  def display_cam(self, n: int):
+    def cam(x, size=256):
+      x = x - np.min(x)
+      cam_img = x / np.max(x)
+      cam_img = np.uint8(255 * cam_img)
+      cam_img = cv2.resize(cam_img, (size, size))
+      cam_img = cv2.applyColorMap(cam_img, cv2.COLORMAP_JET)
+      return cam_img / 255.0
+
+    def denorm(x):
+      return x * 0.5 + 0.5
+
+    def tensor2numpy(x):
+      return x.detach().cpu().numpy().transpose(1, 2, 0)
+
+    def RGB2BGR(x):
+      return cv2.cvtColor(x, cv2.COLOR_RGB2BGR)
+
+    fake_A2B, _, fake_A2B_heatmap = self.netG(self.real_A, cam=True)
+    fake_B2B, _, fake_B2B_heatmap = self.netG(self.real_B, cam=True)
+
+    A2B = np.concatenate((RGB2BGR(tensor2numpy(denorm(self.real_A[0]))),
+                          cam(tensor2numpy(fake_A2B_heatmap[0])),
+                          RGB2BGR(tensor2numpy(denorm(fake_A2B[0])))), 0)
+
+    B2B = np.concatenate((RGB2BGR(tensor2numpy(denorm(self.real_B[0]))),
+                          cam(tensor2numpy(fake_B2B_heatmap[0])),
+                          RGB2BGR(tensor2numpy(denorm(fake_B2B[0])))), 0)
+
+    if not os.path.exists('results'):
+      os.mkdir('results')
+    cv2.imwrite(os.path.join('results', 'A2B_%d.png' % (n + 1)), A2B * 255.0)
+    cv2.imwrite(os.path.join('results', 'B2B_%d.png' % (n + 1)), B2B * 255.0)
