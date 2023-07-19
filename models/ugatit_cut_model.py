@@ -239,21 +239,40 @@ class UGATITCUTModel(BaseModel):
     self.loss_D_LB_real = self.criterionGAN(real_LB_pred, True).mean()
     self.loss_D_real = self.loss_D_GB_real + self.loss_D_LB_real
 
-    D_ad_cam_loss_GB = self.criterionMSE(
-        real_GB_cam_logit,
-        torch.ones_like(real_GB_cam_logit).to(self.device)
-    ) + self.criterionMSE(
-        fake_GB_cam_logit,
-        torch.zeros_like(fake_GB_cam_logit).to(self.device)
+    # D_ad_cam_loss_GB = self.criterionMSE(
+    #     real_GB_cam_logit,
+    #     torch.ones_like(real_GB_cam_logit).to(self.device)
+    # ) + self.criterionMSE(
+    #     fake_GB_cam_logit,
+    #     torch.zeros_like(fake_GB_cam_logit).to(self.device)
+    # )
+    # D_ad_cam_loss_LB = self.criterionMSE(
+    #     real_LB_cam_logit,
+    #     torch.ones_like(real_LB_cam_logit).to(self.device)
+    # ) + self.criterionMSE(
+    #     fake_LB_cam_logit,
+    #     torch.zeros_like(fake_LB_cam_logit).to(self.device)
+    # )
+    D_ad_cam_loss_GB = (
+        self.criterionGAN(
+            real_GB_cam_logit,
+            True
+        ).mean() +
+        self.criterionGAN(
+            fake_GB_cam_logit,
+            False
+        ).mean()
     )
-    D_ad_cam_loss_LB = self.criterionMSE(
-        real_LB_cam_logit,
-        torch.ones_like(real_LB_cam_logit).to(self.device)
-    ) + self.criterionMSE(
-        fake_LB_cam_logit,
-        torch.zeros_like(fake_LB_cam_logit).to(self.device)
+    D_ad_cam_loss_LB = (
+        self.criterionGAN(
+            real_LB_cam_logit,
+            True
+        ).mean() +
+        self.criterionGAN(
+            fake_LB_cam_logit,
+            False
+        ).mean()
     )
-
     self.loss_D_cam = D_ad_cam_loss_GB + D_ad_cam_loss_LB
 
     # combine loss and calculate gradients
