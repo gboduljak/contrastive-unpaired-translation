@@ -10,6 +10,7 @@ dominate = ">=2.4.0"
 visdom = ">=0.1.8.8"
 packaging = "*"
 gputil = ">=1.4.0"
+opencv-python = "*"
 
 [dev-packages]
 
