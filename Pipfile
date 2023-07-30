@@ -12,6 +12,7 @@ packaging = "*"
 gputil = ">=1.4.0"
 torch-fidelity = "*"
 pytorch-fid = "*"
+pillow = "*"
 
 [dev-packages]
 
