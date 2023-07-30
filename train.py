@@ -108,8 +108,9 @@ if __name__ == '__main__':
             verbose=False,
             cuda=torch.cuda.is_available(),
         )
+        smallest_val_fid_file = os.path.join(Path(opt.checkpoints_dir, opt.name), 'val_log.txt')
 
-        with open(os.path.join(Path(opt.checkpoints_dir, opt.name), 'val_log.txt'), 'a') as tl:
+        with open(smallest_val_fid_file, 'a') as tl:
           tl.write(f'step: {total_iters}\n')
           tl.write(
               f'inception_score_mean: {metrics["inception_score_mean"]}\n'
@@ -120,6 +121,22 @@ if __name__ == '__main__':
           tl.write(
               f'frechet_inception_distance: {metrics["frechet_inception_distance"]}\n'
           )
+
+        if metrics['frechet_inception_distance'] < smallest_val_fid:
+          smallest_val_fid = metrics['frechet_inception_distance']
+          model.save_networks('smallest_val_fid')
+
+          if os.path.exists(smallest_val_fid_file):
+            os.remove(smallest_val_fid_file)
+
+          with open(smallest_val_fid_file, 'a') as tl:
+            tl.write(
+                f'step: {total_iters}\n'
+            )
+            tl.write(
+                f'frechet_inception_distance: {metrics["frechet_inception_distance"]}\n'
+            )
+
         model.train()
 
       if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
