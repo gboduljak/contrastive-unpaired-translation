@@ -2,6 +2,8 @@ import ntpath
 import os
 from pathlib import Path
 
+import torch
+
 import util.util as util
 from data import create_dataset
 from models import create_model
@@ -124,78 +126,81 @@ if __name__ == '__main__':
 
 
   print('processing train...')
-  for i, data in enumerate(train_dataset):
-    model.set_input(data)  # unpack data from data loader
-    model.test()           # run inference
-    visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
-    img_path = model.get_image_paths()     # get image paths
-    train_img_dir = Path(train_translated_imgs_dir)
-    full_img_dir = Path(full_translated_imgs_dir)
-    if not os.path.exists(train_img_dir):
-      os.mkdir(train_img_dir)
-    if not os.path.exists(full_img_dir):
-      os.mkdir(full_img_dir)
-    if i % 5 == 0:  # save images to an HTML file
-      print('processing (%04d)-th image... %s' % (i, img_path))
+  with torch.no_grad():
+    for i, data in enumerate(train_dataset):
+      model.set_input(data)  # unpack data from data loader
+      model.test()           # run inference
+      visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
+      img_path = model.get_image_paths()     # get image paths
+      train_img_dir = Path(train_translated_imgs_dir)
+      full_img_dir = Path(full_translated_imgs_dir)
+      if not os.path.exists(train_img_dir):
+        os.mkdir(train_img_dir)
+      if not os.path.exists(full_img_dir):
+        os.mkdir(full_img_dir)
+      if i % 10 == 0:  # save images to an HTML file
+        print('processing (%04d)-th image... %s' % (i, img_path))
 
-    save_images(
-        image_dir=train_img_dir,
-        visuals=visuals,
-        image_path=img_path
-    )
-    save_images(
-        image_dir=full_img_dir,
-        visuals=visuals,
-        image_path=img_path
-    )
+      save_images(
+          image_dir=train_img_dir,
+          visuals=visuals,
+          image_path=img_path
+      )
+      save_images(
+          image_dir=full_img_dir,
+          visuals=visuals,
+          image_path=img_path
+      )
 
   print('processing val...')
-  for i, data in enumerate(val_dataset):
-    model.set_input(data)  # unpack data from data loader
-    model.test()           # run inference
-    visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
-    img_path = model.get_image_paths()     # get image paths
-    val_img_dir = Path(val_translated_imgs_dir)
-    full_img_dir = Path(full_translated_imgs_dir)
-    if not os.path.exists(val_img_dir):
-      os.mkdir(val_img_dir)
-    if not os.path.exists(full_img_dir):
-      os.mkdir(full_img_dir)
-    if i % 5 == 0:  # save images to an HTML file
-      print('processing (%04d)-th image... %s' % (i, img_path))
-    save_images(
-        image_dir=val_img_dir,
-        visuals=visuals,
-        image_path=img_path
-    )
-    save_images(
-        image_dir=full_img_dir,
-        visuals=visuals,
-        image_path=img_path
-    )
+  with torch.no_grad():
+    for i, data in enumerate(val_dataset):
+      model.set_input(data)  # unpack data from data loader
+      model.test()           # run inference
+      visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
+      img_path = model.get_image_paths()     # get image paths
+      val_img_dir = Path(val_translated_imgs_dir)
+      full_img_dir = Path(full_translated_imgs_dir)
+      if not os.path.exists(val_img_dir):
+        os.mkdir(val_img_dir)
+      if not os.path.exists(full_img_dir):
+        os.mkdir(full_img_dir)
+      if i % 10 == 0:  # save images to an HTML file
+        print('processing (%04d)-th image... %s' % (i, img_path))
+      save_images(
+          image_dir=val_img_dir,
+          visuals=visuals,
+          image_path=img_path
+      )
+      save_images(
+          image_dir=full_img_dir,
+          visuals=visuals,
+          image_path=img_path
+      )
 
   print('processing test...')
-  for i, data in enumerate(test_dataset):
-    model.set_input(data)  # unpack data from data loader
-    model.test()           # run inference
-    visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
-    img_path = model.get_image_paths()     # get image paths
-    test_img_dir = Path(test_translated_imgs_dir)
-    full_img_dir = Path(full_translated_imgs_dir)
-    if not os.path.exists(test_img_dir):
-      os.mkdir(test_img_dir)
-    if not os.path.exists(full_img_dir):
-      os.mkdir(full_img_dir)
-    if i % 5 == 0:  # save images to an HTML file
-      print('processing (%04d)-th image... %s' % (i, img_path))
+  with torch.no_grad():
+    for i, data in enumerate(test_dataset):
+      model.set_input(data)  # unpack data from data loader
+      model.test()           # run inference
+      visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
+      img_path = model.get_image_paths()     # get image paths
+      test_img_dir = Path(test_translated_imgs_dir)
+      full_img_dir = Path(full_translated_imgs_dir)
+      if not os.path.exists(test_img_dir):
+        os.mkdir(test_img_dir)
+      if not os.path.exists(full_img_dir):
+        os.mkdir(full_img_dir)
+      if i % 10 == 0:  # save images to an HTML file
+        print('processing (%04d)-th image... %s' % (i, img_path))
 
-    save_images(
-        image_dir=test_img_dir,
-        visuals=visuals,
-        image_path=img_path
-    )
-    save_images(
-        image_dir=full_img_dir,
-        visuals=visuals,
-        image_path=img_path
-    )
+      save_images(
+          image_dir=test_img_dir,
+          visuals=visuals,
+          image_path=img_path
+      )
+      save_images(
+          image_dir=full_img_dir,
+          visuals=visuals,
+          image_path=img_path
+      )

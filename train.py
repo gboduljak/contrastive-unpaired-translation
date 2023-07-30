@@ -99,32 +99,34 @@ if __name__ == '__main__':
           os.mkdir(model_with_iter_val_translations_dir)
 
         print('translating train...')
-        for i, data in enumerate(train_dataset_without_augmentations):
-          model.set_input(data)  # unpack data from data loader
-          model.test()           # run inference
-          visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
-          img_path = model.get_image_paths()     # get image paths
-          save_images(
-              image_dir=model_with_iter_train_translations_dir,
-              visuals=visuals,
-              image_path=img_path
-          )
-          if i % 5 == 0:
-            print('processing (%04d)-th image... %s' % (i, img_path))
+        with torch.no_grad():
+          for i, data in enumerate(train_dataset_without_augmentations):
+            model.set_input(data)  # unpack data from data loader
+            model.test()           # run inference
+            visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
+            img_path = model.get_image_paths()     # get image paths
+            save_images(
+                image_dir=model_with_iter_train_translations_dir,
+                visuals=visuals,
+                image_path=img_path
+            )
+            if i % 10 == 0:
+              print('processing (%04d)-th image... %s' % (i, img_path))
 
         print('translating val...')
-        for i, data in enumerate(val_dataset):
-          model.set_input(data)  # unpack data from data loader
-          model.test()           # run inference
-          visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
-          img_path = model.get_image_paths()     # get image paths
-          save_images(
-              image_dir=model_with_iter_val_translations_dir,
-              visuals=visuals,
-              image_path=img_path
-          )
-          if i % 5 == 0:
-            print('processing (%04d)-th image... %s' % (i, img_path))
+        with torch.no_grad():
+          for i, data in enumerate(val_dataset):
+            model.set_input(data)  # unpack data from data loader
+            model.test()           # run inference
+            visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
+            img_path = model.get_image_paths()     # get image paths
+            save_images(
+                image_dir=model_with_iter_val_translations_dir,
+                visuals=visuals,
+                image_path=img_path
+            )
+            if i % 10 == 0:
+              print('processing (%04d)-th image... %s' % (i, img_path))
 
         target_real_train_dir = os.path.join(
             opt.dataroot,
