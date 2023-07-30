@@ -144,8 +144,8 @@ if __name__ == '__main__':
       if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
         print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
         print(opt.name)  # it's useful to occasionally show the experiment name on console
-        save_suffix = 'latest'
-        model.save_networks(save_suffix)
+        model.save_networks('latest')
+        model.save_networks('iter_%07d' % total_iters)
 
       iter_data_time = time.time()
 
