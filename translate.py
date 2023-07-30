@@ -17,6 +17,8 @@ def create_train_dataset(opt):
       serial_batches=True,
       no_flip=True,
       display_id=-1,
+      eval=True,
+      load_size=opt.crop_size  # To avoid cropping, the load_size should be the same as crop_size.
   )
   return create_dataset(train_opt)
 
@@ -30,6 +32,8 @@ def create_val_dataset(opt):
       serial_batches=True,
       no_flip=True,
       display_id=-1,
+      eval=True,
+      load_size=opt.crop_size  # To avoid cropping, the load_size should be the same as crop_size.
   )
   return create_dataset(val_opt)
 
@@ -43,6 +47,8 @@ def create_test_dataset(opt):
       serial_batches=True,
       no_flip=True,
       display_id=-1,
+      eval=True,
+      load_size=opt.crop_size  # To avoid cropping, the load_size should be the same as crop_size.
   )
   return create_dataset(test_opt)
 
@@ -75,6 +81,8 @@ if __name__ == '__main__':
   opt.serial_batches = True  # disable data shuffling; comment this line if results on randomly chosen images are needed.
   opt.no_flip = True    # no flip; comment this line if results on flipped images are needed.
   opt.display_id = -1   # no visdom display; the test code saves the results to a HTML file.
+  opt.eval = True
+  opt.load_size = opt.crop_size  # To avoid cropping, the load_size should be the same as crop_size
 
   ckpt = opt.epoch  # hack
 
