@@ -76,11 +76,14 @@ if __name__ == '__main__':
   opt.no_flip = True    # no flip; comment this line if results on flipped images are needed.
   opt.display_id = -1   # no visdom display; the test code saves the results to a HTML file.
 
+  load_iter = opt.epoch  # hack
 
   train_dataset = create_train_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+  val_dataset = create_val_dataset(opt)
   test_dataset = create_test_dataset(opt)
 
   print(len(train_dataset))
+  print(len(val_dataset))
   print(len(test_dataset))
 
   model = create_model(opt)      # create a model given opt.model and other options
@@ -95,13 +98,13 @@ if __name__ == '__main__':
   model_translations_dir = Path('translations', opt.name)
   if not os.path.exists(model_translations_dir):
     os.mkdir(model_translations_dir)
-  model_with_epochs_translations_dir = Path(model_translations_dir, f'epoch-{opt.epoch}')
-  if not os.path.exists(model_with_epochs_translations_dir):
-    os.mkdir(model_with_epochs_translations_dir)
+  model_with_iters_translations_dir = Path(model_translations_dir, f'iter-{load_iter}')
+  if not os.path.exists(model_with_iters_translations_dir):
+    os.mkdir(model_with_iters_translations_dir)
 
-  train_translated_imgs_dir = Path(model_with_epochs_translations_dir, 'train')
-  test_translated_imgs_dir = Path(model_with_epochs_translations_dir, 'test')
-  full_translated_imgs_dir = Path(model_with_epochs_translations_dir, 'full')
+  train_translated_imgs_dir = Path(model_with_iters_translations_dir, 'train')
+  test_translated_imgs_dir = Path(model_with_iters_translations_dir, 'test')
+  full_translated_imgs_dir = Path(model_with_iters_translations_dir, 'full')
 
   if not os.path.exists(train_translated_imgs_dir):
     os.mkdir(train_translated_imgs_dir)
