@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
         model_with_step_translations_dir = Path(
             model_val_translations_dir,
-            'params_%07d' % total_iters
+            'iter_%07d' % total_iters
         )
 
         if not os.path.exists(model_with_step_translations_dir):
