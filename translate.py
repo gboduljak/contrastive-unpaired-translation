@@ -123,8 +123,8 @@ if __name__ == '__main__':
     model.test()           # run inference
     visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
     img_path = model.get_image_paths()     # get image paths
-    val_img_dir = Path(train_translated_imgs_dir, opt.direction)
-    full_img_dir = Path(full_translated_imgs_dir, opt.direction)
+    val_img_dir = Path(train_translated_imgs_dir)
+    full_img_dir = Path(full_translated_imgs_dir)
     if not os.path.exists(val_img_dir):
       os.mkdir(val_img_dir)
     if not os.path.exists(full_img_dir):
@@ -149,8 +149,8 @@ if __name__ == '__main__':
     model.test()           # run inference
     visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
     img_path = model.get_image_paths()     # get image paths
-    val_img_dir = Path(val_translated_imgs_dir, opt.direction)
-    full_img_dir = Path(full_translated_imgs_dir, opt.direction)
+    val_img_dir = Path(val_translated_imgs_dir)
+    full_img_dir = Path(full_translated_imgs_dir)
     if not os.path.exists(val_img_dir):
       os.mkdir(val_img_dir)
     if not os.path.exists(full_img_dir):
@@ -174,8 +174,8 @@ if __name__ == '__main__':
     model.test()           # run inference
     visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
     img_path = model.get_image_paths()     # get image paths
-    test_img_dir = Path(test_translated_imgs_dir, opt.direction)
-    full_img_dir = Path(full_translated_imgs_dir, opt.direction)
+    test_img_dir = Path(test_translated_imgs_dir)
+    full_img_dir = Path(full_translated_imgs_dir)
     if not os.path.exists(test_img_dir):
       os.mkdir(test_img_dir)
     if not os.path.exists(full_img_dir):
