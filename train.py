@@ -124,6 +124,8 @@ if __name__ == '__main__':
 
         if metrics['frechet_inception_distance'] < smallest_val_fid:
           smallest_val_fid = metrics['frechet_inception_distance']
+          print('saving the smallest_val_fid model')
+
           model.save_networks('smallest_val_fid')
 
           if os.path.exists(smallest_val_fid_file):
