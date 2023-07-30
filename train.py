@@ -6,14 +6,17 @@ import torch
 import torch_fidelity
 
 import util.util as util
+from data import create_dataset
 from models import create_model
 from options.train_options import TrainOptions
-from translate import *
+from translate import (create_train_dataset, create_val_dataset, save_images,
+                       select_visuals)
 from util.visualizer import Visualizer
 
 if __name__ == '__main__':
   opt = TrainOptions().parse()   # get training options
-  train_dataset = create_train_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+  train_dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+  train_dataset_without_augmentations = create_train_dataset(opt)
   val_dataset = create_val_dataset(opt)
   train_dataset_size = len(train_dataset)    # get the number of images in the dataset.
 
@@ -96,7 +99,7 @@ if __name__ == '__main__':
           os.mkdir(model_with_step_val_translations_dir)
 
         print('translating train...')
-        for i, data in enumerate(train_dataset):
+        for i, data in enumerate(train_dataset_without_augmentations):
           model.set_input(data)  # unpack data from data loader
           model.test()           # run inference
           visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
