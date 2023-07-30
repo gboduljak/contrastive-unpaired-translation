@@ -74,8 +74,8 @@ if __name__ == '__main__':
         if not os.path.exists(model_train_translations_dir):
           os.mkdir(model_train_translations_dir)
 
-        model_train_translations_dir = Path(model_train_translations_dir, 'train')
-        model_val_translations_dir = Path(model_train_translations_dir, 'val')
+        model_train_translations_dir = Path(model_translations_dir, 'train')
+        model_val_translations_dir = Path(model_translations_dir, 'val')
 
         if not os.path.exists(model_train_translations_dir):
           os.mkdir(model_train_translations_dir)
