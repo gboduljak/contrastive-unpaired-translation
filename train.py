@@ -127,7 +127,6 @@ if __name__ == '__main__':
             opt.dataroot,
             'trainB'
         )
-
         target_real_val_dir = os.path.join(
             opt.dataroot,
             'valB'
