@@ -74,8 +74,8 @@ if __name__ == '__main__':
 
         model_translations_dir = Path(opt.checkpoints_dir, opt.name, 'translations')
 
-        if not os.path.exists(model_train_translations_dir):
-          os.mkdir(model_train_translations_dir)
+        if not os.path.exists(model_translations_dir):
+          os.mkdir(model_translations_dir)
 
         model_train_translations_dir = Path(model_translations_dir, 'train')
         model_val_translations_dir = Path(model_translations_dir, 'val')
