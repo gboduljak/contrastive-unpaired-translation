@@ -121,17 +121,17 @@ if __name__ == '__main__':
     model.test()           # run inference
     visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
     img_path = model.get_image_paths()     # get image paths
-    val_img_dir = Path(train_translated_imgs_dir)
+    train_img_dir = Path(train_translated_imgs_dir)
     full_img_dir = Path(full_translated_imgs_dir)
-    if not os.path.exists(val_img_dir):
-      os.mkdir(val_img_dir)
+    if not os.path.exists(train_img_dir):
+      os.mkdir(train_img_dir)
     if not os.path.exists(full_img_dir):
       os.mkdir(full_img_dir)
     if i % 5 == 0:  # save images to an HTML file
       print('processing (%04d)-th image... %s' % (i, img_path))
 
     save_images(
-        image_dir=val_img_dir,
+        image_dir=train_img_dir,
         visuals=visuals,
         image_path=img_path
     )
