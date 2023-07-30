@@ -91,8 +91,9 @@ if __name__ == '__main__':
 
   if opt.eval:
     model.eval()
-
-  model_translations_dir = Path('translations')
+  if not os.path.exists('translations'):
+    os.mkdir('translations')
+  model_translations_dir = Path('translations', opt.name)
   if not os.path.exists(model_translations_dir):
     os.mkdir(model_translations_dir)
   model_with_iters_translations_dir = Path(model_translations_dir, f'{ckpt}')
