@@ -85,18 +85,18 @@ if __name__ == '__main__':
         if not os.path.exists(model_val_translations_dir):
           os.mkdir(model_val_translations_dir)
 
-        model_with_step_train_translations_dir = Path(
+        model_with_iter_train_translations_dir = Path(
             model_train_translations_dir,
             'iter_%07d' % total_iters
         )
-        model_with_step_val_translations_dir = Path(
+        model_with_iter_val_translations_dir = Path(
             model_val_translations_dir,
             'iter_%07d' % total_iters
         )
-        if not os.path.exists(model_with_step_train_translations_dir):
-          os.mkdir(model_with_step_train_translations_dir)
-        if not os.path.exists(model_with_step_val_translations_dir):
-          os.mkdir(model_with_step_val_translations_dir)
+        if not os.path.exists(model_with_iter_train_translations_dir):
+          os.mkdir(model_with_iter_train_translations_dir)
+        if not os.path.exists(model_with_iter_val_translations_dir):
+          os.mkdir(model_with_iter_val_translations_dir)
 
         print('translating train...')
         for i, data in enumerate(train_dataset_without_augmentations):
@@ -105,7 +105,7 @@ if __name__ == '__main__':
           visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
           img_path = model.get_image_paths()     # get image paths
           save_images(
-              image_dir=model_with_step_train_translations_dir,
+              image_dir=model_with_iter_train_translations_dir,
               visuals=visuals,
               image_path=img_path
           )
@@ -119,7 +119,7 @@ if __name__ == '__main__':
           visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
           img_path = model.get_image_paths()     # get image paths
           save_images(
-              image_dir=model_with_step_val_translations_dir,
+              image_dir=model_with_iter_val_translations_dir,
               visuals=visuals,
               image_path=img_path
           )
@@ -137,7 +137,7 @@ if __name__ == '__main__':
 
         train_metrics = torch_fidelity.calculate_metrics(
             input1=str(target_real_train_dir),
-            input2=str(Path(model_with_step_train_translations_dir)),  # fake dir,
+            input2=str(Path(model_with_iter_train_translations_dir)),  # fake dir,
             fid=True,
             verbose=False,
             cuda=torch.cuda.is_available(),
@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
         val_metrics = torch_fidelity.calculate_metrics(
             input1=str(target_real_val_dir),
-            input2=str(Path(model_with_step_val_translations_dir)),  # fake dir,
+            input2=str(Path(model_with_iter_val_translations_dir)),  # fake dir,
             fid=True,
             verbose=False,
             cuda=torch.cuda.is_available(),
@@ -156,13 +156,13 @@ if __name__ == '__main__':
         smallest_val_fid_file = os.path.join(Path(opt.checkpoints_dir, opt.name), 'smallest_val_fid.txt')
 
         with open(train_log_file, 'a') as tl:
-          tl.write(f'step: {total_iters}\n')
+          tl.write(f'iter: {total_iters}\n')
           tl.write(
               f'frechet_inception_distance: {train_metrics["frechet_inception_distance"]}\n'
           )
 
         with open(val_log_file, 'a') as tl:
-          tl.write(f'step: {total_iters}\n')
+          tl.write(f'iter: {total_iters}\n')
           tl.write(
               f'frechet_inception_distance: {val_metrics["frechet_inception_distance"]}\n'
           )
@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
           with open(smallest_val_fid_file, 'a') as tl:
             tl.write(
-                f'step: {total_iters}\n'
+                f'iter: {total_iters}\n'
             )
             tl.write(
                 f'frechet_inception_distance: {val_metrics["frechet_inception_distance"]}\n'
