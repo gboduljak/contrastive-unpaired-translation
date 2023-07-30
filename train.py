@@ -69,17 +69,40 @@ if __name__ == '__main__':
       if total_iters % opt.val_freq == 0:
         model.eval()
 
+        model_train_translations_dir = Path(opt.checkpoints_dir, opt.name, 'train')
         model_val_translations_dir = Path(opt.checkpoints_dir, opt.name, 'val')
+
+        if not os.path.exists(model_train_translations_dir):
+          os.mkdir(model_train_translations_dir)
         if not os.path.exists(model_val_translations_dir):
           os.mkdir(model_val_translations_dir)
 
-        model_with_step_translations_dir = Path(
+        model_with_step_train_translations_dir = Path(
+            model_train_translations_dir,
+            'iter_%07d' % total_iters
+        )
+        model_with_step_val_translations_dir = Path(
             model_val_translations_dir,
             'iter_%07d' % total_iters
         )
+        if not os.path.exists(model_with_step_train_translations_dir):
+          os.mkdir(model_with_step_train_translations_dir)
+        if not os.path.exists(model_with_step_val_translations_dir):
+          os.mkdir(model_with_step_val_translations_dir)
 
-        if not os.path.exists(model_with_step_translations_dir):
-          os.mkdir(model_with_step_translations_dir)
+        print('translating train...')
+        for i, data in enumerate(train_dataset):
+          model.set_input(data)  # unpack data from data loader
+          model.test()           # run inference
+          visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
+          img_path = model.get_image_paths()     # get image paths
+          save_images(
+              image_dir=model_with_step_train_translations_dir,
+              visuals=visuals,
+              image_path=img_path
+          )
+          if i % 5 == 0:
+            print('processing (%04d)-th image... %s' % (i, img_path))
 
         print('translating val...')
         for i, data in enumerate(val_dataset):
@@ -88,43 +111,57 @@ if __name__ == '__main__':
           visuals = select_visuals(model.get_current_visuals(), opt.direction)  # get image results
           img_path = model.get_image_paths()     # get image paths
           save_images(
-              image_dir=model_with_step_translations_dir,
+              image_dir=model_with_step_val_translations_dir,
               visuals=visuals,
               image_path=img_path
           )
           if i % 5 == 0:
             print('processing (%04d)-th image... %s' % (i, img_path))
 
+        target_real_train_dir = os.path.join(
+            opt.dataroot,
+            'trainB'
+        )
+
         target_real_val_dir = os.path.join(
             opt.dataroot,
             'valB'
         )
 
-        metrics = torch_fidelity.calculate_metrics(
-            input1=str(target_real_val_dir),
-            input2=str(Path(model_with_step_translations_dir)),  # fake dir,
-            isc=True,
+        train_metrics = torch_fidelity.calculate_metrics(
+            input1=str(target_real_train_dir),
+            input2=str(Path(model_with_step_train_translations_dir)),  # fake dir,
             fid=True,
             verbose=False,
             cuda=torch.cuda.is_available(),
         )
+
+        val_metrics = torch_fidelity.calculate_metrics(
+            input1=str(target_real_val_dir),
+            input2=str(Path(model_with_step_val_translations_dir)),  # fake dir,
+            fid=True,
+            verbose=False,
+            cuda=torch.cuda.is_available(),
+        )
+
+        train_log_file = os.path.join(Path(opt.checkpoints_dir, opt.name), 'train_log.txt')
         val_log_file = os.path.join(Path(opt.checkpoints_dir, opt.name), 'val_log.txt')
         smallest_val_fid_file = os.path.join(Path(opt.checkpoints_dir, opt.name), 'smallest_val_fid.txt')
+
+        with open(train_log_file, 'a') as tl:
+          tl.write(f'step: {total_iters}\n')
+          tl.write(
+              f'frechet_inception_distance: {train_metrics["frechet_inception_distance"]}\n'
+          )
 
         with open(val_log_file, 'a') as tl:
           tl.write(f'step: {total_iters}\n')
           tl.write(
-              f'inception_score_mean: {metrics["inception_score_mean"]}\n'
-          )
-          tl.write(
-              f'inception_score_std: {metrics["inception_score_std"]}\n',
-          )
-          tl.write(
-              f'frechet_inception_distance: {metrics["frechet_inception_distance"]}\n'
+              f'frechet_inception_distance: {val_metrics["frechet_inception_distance"]}\n'
           )
 
-        if metrics['frechet_inception_distance'] < smallest_val_fid:
-          smallest_val_fid = metrics['frechet_inception_distance']
+        if val_metrics['frechet_inception_distance'] < smallest_val_fid:
+          smallest_val_fid = val_metrics['frechet_inception_distance']
           print('saving the smallest_val_fid model')
           model.save_networks('smallest_val_fid')
 
@@ -136,7 +173,7 @@ if __name__ == '__main__':
                 f'step: {total_iters}\n'
             )
             tl.write(
-                f'frechet_inception_distance: {metrics["frechet_inception_distance"]}\n'
+                f'frechet_inception_distance: {val_metrics["frechet_inception_distance"]}\n'
             )
 
         model.train()
