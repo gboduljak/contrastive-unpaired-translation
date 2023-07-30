@@ -69,8 +69,13 @@ if __name__ == '__main__':
       if total_iters % opt.val_freq == 0:
         model.eval()
 
-        model_train_translations_dir = Path(opt.checkpoints_dir, opt.name, 'train')
-        model_val_translations_dir = Path(opt.checkpoints_dir, opt.name, 'val')
+        model_translations_dir = Path(opt.checkpoints_dir, opt.name, 'translations')
+
+        if not os.path.exists(model_train_translations_dir):
+          os.mkdir(model_train_translations_dir)
+
+        model_train_translations_dir = Path(model_train_translations_dir, 'train')
+        model_val_translations_dir = Path(model_train_translations_dir, 'val')
 
         if not os.path.exists(model_train_translations_dir):
           os.mkdir(model_train_translations_dir)
