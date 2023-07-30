@@ -108,9 +108,10 @@ if __name__ == '__main__':
             verbose=False,
             cuda=torch.cuda.is_available(),
         )
-        smallest_val_fid_file = os.path.join(Path(opt.checkpoints_dir, opt.name), 'val_log.txt')
+        val_log_file = os.path.join(Path(opt.checkpoints_dir, opt.name), 'val_log.txt')
+        smallest_val_fid_file = os.path.join(Path(opt.checkpoints_dir, opt.name), 'smallest_val_fid.txt')
 
-        with open(smallest_val_fid_file, 'a') as tl:
+        with open(val_log_file, 'a') as tl:
           tl.write(f'step: {total_iters}\n')
           tl.write(
               f'inception_score_mean: {metrics["inception_score_mean"]}\n'
@@ -125,7 +126,6 @@ if __name__ == '__main__':
         if metrics['frechet_inception_distance'] < smallest_val_fid:
           smallest_val_fid = metrics['frechet_inception_distance']
           print('saving the smallest_val_fid model')
-
           model.save_networks('smallest_val_fid')
 
           if os.path.exists(smallest_val_fid_file):
