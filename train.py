@@ -163,9 +163,9 @@ if __name__ == '__main__':
               f'frechet_inception_distance: {train_metrics["frechet_inception_distance"]}\n'
           )
 
-        with open(val_log_file, 'a') as tl:
-          tl.write(f'iter: {total_iters}\n')
-          tl.write(
+        with open(val_log_file, 'a') as vl:
+          vl.write(f'iter: {total_iters}\n')
+          vl.write(
               f'frechet_inception_distance: {val_metrics["frechet_inception_distance"]}\n'
           )
 
