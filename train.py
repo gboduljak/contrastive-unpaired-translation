@@ -13,8 +13,22 @@ from translate import (create_train_dataset, create_val_dataset, save_images,
                        select_visuals)
 from util.visualizer import Visualizer
 
+# def seed_everything(seed: int):
+#   import os
+#   import numpy as np
+#   import torch
+#   import random
+
+#   random.seed(seed)
+#   os.environ['PYTHONHASHSEED'] = str(seed)
+#   np.random.seed(seed)
+#   torch.manual_seed(seed)
+#   torch.cuda.manual_seed(seed)
+#   # torch.mps.manual_seed(seed)
+
 if __name__ == '__main__':
   opt = TrainOptions().parse()   # get training options
+  # seed_everything(42)
   train_dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
   train_dataset_without_augmentations = create_train_dataset(opt)
   val_dataset = create_val_dataset(opt)
