@@ -15,16 +15,18 @@ from util.visualizer import Visualizer
 
 # def seed_everything(seed: int):
 #   import os
+#   import random
+
 #   import numpy as np
 #   import torch
-#   import random
 
 #   random.seed(seed)
 #   os.environ['PYTHONHASHSEED'] = str(seed)
 #   np.random.seed(seed)
 #   torch.manual_seed(seed)
-#   # torch.cuda.manual_seed(seed)
+#   torch.cuda.manual_seed(seed)
 #   # torch.mps.manual_seed(seed)
+
 
 if __name__ == '__main__':
   # seed_everything(42)
